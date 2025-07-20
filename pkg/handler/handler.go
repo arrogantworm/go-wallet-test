@@ -32,12 +32,14 @@ func (h *Handler) RegisterRoutes() *chi.Mux {
 	}))
 
 	r.Route("/api/v1", func(r chi.Router) {
-		// r.Post("/wallet", )
+		r.Post("/wallet", h.updateWalletBalance)
 		r.Get("/wallets/{id}", h.getWalletInfo)
 	})
 
 	return r
 }
+
+// Standard Responses
 
 func (h *Handler) sendError(w http.ResponseWriter, message string, status int) {
 	if message == "" {
@@ -60,4 +62,10 @@ func (h *Handler) sendSuccess(w http.ResponseWriter, message string, status int)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(SuccessRes{message})
+}
+
+func (h *Handler) sendJSON(w http.ResponseWriter, data any, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(data)
 }

@@ -1,14 +1,18 @@
 package service
 
 import (
+	"context"
 	"wallet-app/pkg/repository"
+
+	"github.com/google/uuid"
 )
 
 type Database interface {
 	Close()
-	Deposit(walletID int, amount float64) error
-	Withdraw(walletID int, amount float64) error
-	GetBalance(walledID int) (float64, error)
+	NewWallet(ctx context.Context, walletID uuid.UUID, amount float64) error
+	Deposit(ctx context.Context, walletID uuid.UUID, amount float64) error
+	Withdraw(ctx context.Context, walletID uuid.UUID, amount float64) error
+	GetBalance(ctx context.Context, walletID uuid.UUID) (float64, error)
 }
 
 type Service struct {

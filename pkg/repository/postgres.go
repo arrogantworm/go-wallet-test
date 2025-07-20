@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	postgres struct {
+	postgresDB struct {
 		db *pgxpool.Pool
 	}
 
@@ -24,18 +24,18 @@ type (
 )
 
 var (
-	pgInstance *postgres
+	pgInstance *postgresDB
 	pgOnce     sync.Once
 )
 
-func NewPG(ctx context.Context, cfg Config) (*postgres, error) {
+func NewPG(ctx context.Context, cfg Config) (*postgresDB, error) {
 	var err error
 	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", cfg.User, cfg.Pass, cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode)
 	pgOnce.Do(func() {
 		var db *pgxpool.Pool
 		db, err = pgxpool.New(ctx, connString)
 		if err == nil {
-			pgInstance = &postgres{db}
+			pgInstance = &postgresDB{db}
 		}
 	})
 
@@ -50,10 +50,10 @@ func NewPG(ctx context.Context, cfg Config) (*postgres, error) {
 	return pgInstance, nil
 }
 
-func (pg *postgres) ping(ctx context.Context) error {
+func (pg *postgresDB) ping(ctx context.Context) error {
 	return pg.db.Ping(ctx)
 }
 
-func (pg *postgres) Close() {
+func (pg *postgresDB) Close() {
 	pg.db.Close()
 }
