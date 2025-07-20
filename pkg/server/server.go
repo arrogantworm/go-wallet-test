@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 )
@@ -18,7 +19,7 @@ func (s *Server) Run(port string, hander http.Handler) error {
 		ReadTimeout:    time.Second * 10,
 		WriteTimeout:   time.Second * 10,
 	}
-
+	log.Printf("Server started on http://localhost:%s", port)
 	return s.httpServer.ListenAndServe()
 }
 

@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"wallet-app/pkg/middlewares"
 	"wallet-app/pkg/service"
 
 	"github.com/go-chi/chi/v5"
@@ -21,6 +22,7 @@ func NewHandler(service *service.Service) *Handler {
 func (h *Handler) RegisterRoutes() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.StripSlashes)
+	r.Use(middlewares.LoggingMiddleware)
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
