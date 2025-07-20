@@ -1,0 +1,38 @@
+services:
+
+  postgres:
+    image: postgres:17.5
+    restart: always
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME:?error}
+      - POSTGRES_USER=${DB_USER:?error}
+      - POSTGRES_PASSWORD=${DB_PASS:?error}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:?error} -d ${DB_NAME:?error}" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+
+  migrate:
+    image: migrate/migrate
+    volumes:
+        - ./schema/migrations:/migrations
+    command: ["-path", "/migrations", "-database",  "postgres://${DB_USER:?error}:${DB_PASS:?error}@${DB_HOST:?error}:${DB_PORT:?error}/${DB_NAME:?error}?sslmode=${DB_SSLMODE:?error}", "up"]
+    links: 
+        - postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    command: ./wallet-backend
+    ports:
+      - 8000:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
