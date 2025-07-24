@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (pg *postgresDB) NewWallet(ctx context.Context, walletID uuid.UUID, amount float64) error {
+func (pg *postgresDB) NewWallet(ctx context.Context, walletID uuid.UUID, amount int) error {
 	query := `INSERT INTO wallets (id, balance) VALUES (@walletID, @amount)`
 	args := pgx.NamedArgs{"walletID": walletID, "amount": amount}
 	_, err := pg.db.Exec(ctx, query, args)
@@ -19,7 +19,7 @@ func (pg *postgresDB) NewWallet(ctx context.Context, walletID uuid.UUID, amount 
 	return nil
 }
 
-func (pg *postgresDB) Deposit(ctx context.Context, walletID uuid.UUID, amount float64) error {
+func (pg *postgresDB) Deposit(ctx context.Context, walletID uuid.UUID, amount int) error {
 	querySelect := `SELECT balance FROM wallets WHERE id=@walletID FOR UPDATE`
 	argsSelect := pgx.NamedArgs{
 		"walletID": walletID,
@@ -37,7 +37,7 @@ func (pg *postgresDB) Deposit(ctx context.Context, walletID uuid.UUID, amount fl
 	}
 	defer tx.Rollback(ctx)
 
-	var balance float64
+	var balance int
 
 	if err := tx.QueryRow(ctx, querySelect, argsSelect).Scan(&balance); err != nil {
 		return fmt.Errorf("select for update: %w", err)
@@ -50,7 +50,7 @@ func (pg *postgresDB) Deposit(ctx context.Context, walletID uuid.UUID, amount fl
 	return tx.Commit(ctx)
 }
 
-func (pg *postgresDB) Withdraw(ctx context.Context, walletID uuid.UUID, amount float64) error {
+func (pg *postgresDB) Withdraw(ctx context.Context, walletID uuid.UUID, amount int) error {
 	querySelect := `SELECT balance FROM wallets WHERE id=@walletID FOR UPDATE`
 	argsSelect := pgx.NamedArgs{
 		"walletID": walletID,
@@ -68,7 +68,7 @@ func (pg *postgresDB) Withdraw(ctx context.Context, walletID uuid.UUID, amount f
 	}
 	defer tx.Rollback(ctx)
 
-	var balance float64
+	var balance int
 
 	if err := tx.QueryRow(ctx, querySelect, argsSelect).Scan(&balance); err != nil {
 		return fmt.Errorf("select for update: %w", err)
@@ -85,8 +85,8 @@ func (pg *postgresDB) Withdraw(ctx context.Context, walletID uuid.UUID, amount f
 	return tx.Commit(ctx)
 }
 
-func (pg *postgresDB) GetBalance(ctx context.Context, walletID uuid.UUID) (float64, error) {
-	var balance float64
+func (pg *postgresDB) GetBalance(ctx context.Context, walletID uuid.UUID) (int, error) {
+	var balance int
 	err := pg.db.QueryRow(ctx, `SELECT balance FROM wallets WHERE id = $1`, walletID).Scan(&balance)
 	if err != nil {
 		return 0, fmt.Errorf("get balance: %w", err)

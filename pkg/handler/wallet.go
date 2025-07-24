@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 	custom_errors "wallet-app/pkg/errors"
 	"wallet-app/pkg/models"
@@ -17,7 +19,7 @@ type (
 	UpdateWalletJSON struct {
 		WalletID  uuid.UUID `json:"walletId"`
 		Operation string    `json:"operationType"`
-		Amount    float64   `json:"amount"`
+		Amount    string    `json:"amount"`
 	}
 )
 
@@ -56,13 +58,31 @@ func (h *Handler) updateWalletBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	match, err := regexp.MatchString(`^\d+\.00$`, req.Amount)
+	if err != nil || !match {
+		h.sendError(w, "amount must be in format *.00 (e.g., 100.00)", http.StatusBadRequest)
+		return
+	}
+
+	amountStr := strings.Replace(req.Amount, ".", "", 1)
+	amount, err := strconv.Atoi(amountStr)
+	if err != nil {
+		h.sendError(w, "invalid amount", http.StatusBadRequest)
+		return
+	}
+
+	if amount < 0 {
+		h.sendError(w, "amount can't be negative", http.StatusBadRequest)
+		return
+	}
+
 	ctx := r.Context()
 
 	switch strings.ToLower(req.Operation) {
 	case "deposit":
-		if err := h.service.Deposit(ctx, req.WalletID, req.Amount); err != nil {
+		if err := h.service.Deposit(ctx, req.WalletID, amount); err != nil {
 			if errors.Is(err, custom_errors.ErrWalletNotFound) {
-				if err := h.service.NewWallet(ctx, req.WalletID, req.Amount); err != nil {
+				if err := h.service.NewWallet(ctx, req.WalletID, amount); err != nil {
 					h.sendError(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
@@ -73,7 +93,7 @@ func (h *Handler) updateWalletBalance(w http.ResponseWriter, r *http.Request) {
 		}
 		h.sendSuccess(w, "balance updated", http.StatusOK)
 	case "withdraw":
-		if err := h.service.Withdraw(ctx, req.WalletID, req.Amount); err != nil {
+		if err := h.service.Withdraw(ctx, req.WalletID, amount); err != nil {
 			if errors.Is(err, custom_errors.ErrNotEnoughFunds) {
 				h.sendError(w, err.Error(), http.StatusBadRequest)
 				return

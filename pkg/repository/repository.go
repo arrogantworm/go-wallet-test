@@ -8,10 +8,10 @@ import (
 
 type Database interface {
 	Close()
-	NewWallet(ctx context.Context, walletID uuid.UUID, amount float64) error
-	Deposit(ctx context.Context, walletID uuid.UUID, amount float64) error
-	Withdraw(ctx context.Context, walletID uuid.UUID, amount float64) error
-	GetBalance(ctx context.Context, walletID uuid.UUID) (float64, error)
+	NewWallet(ctx context.Context, walletID uuid.UUID, amount int) error
+	Deposit(ctx context.Context, walletID uuid.UUID, amount int) error
+	Withdraw(ctx context.Context, walletID uuid.UUID, amount int) error
+	GetBalance(ctx context.Context, walletID uuid.UUID) (int, error)
 }
 
 type Repository struct {

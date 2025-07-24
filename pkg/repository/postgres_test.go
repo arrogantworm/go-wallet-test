@@ -84,7 +84,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestWalletNotFound(t *testing.T) {
-	err := testPG.Deposit(ctx, uuid.New(), 1000.00)
+	err := testPG.Deposit(ctx, uuid.New(), 1000)
 	assert.Error(t, err)
 
 	assert.True(t, errors.Is(err, custom_errors.ErrWalletNotFound))
@@ -94,52 +94,52 @@ func TestNewWallet(t *testing.T) {
 
 	newWalletUUID := uuid.New()
 
-	err := testPG.NewWallet(ctx, newWalletUUID, 1000.00)
+	err := testPG.NewWallet(ctx, newWalletUUID, 1000)
 	assert.NoError(t, err)
 
 	newWalletBalance, err := testPG.GetBalance(ctx, newWalletUUID)
 	assert.NoError(t, err)
 
-	assert.Equal(t, newWalletBalance, 1000.0)
+	assert.Equal(t, newWalletBalance, 1000)
 }
 
 func TestDeposit(t *testing.T) {
 	newWalletUUID := uuid.New()
 
-	err := testPG.NewWallet(ctx, newWalletUUID, 1000.00)
+	err := testPG.NewWallet(ctx, newWalletUUID, 1000)
 	assert.NoError(t, err)
 
-	err = testPG.Deposit(ctx, newWalletUUID, 500.00)
+	err = testPG.Deposit(ctx, newWalletUUID, 500)
 	assert.NoError(t, err)
 
 	newWalletBalance, err := testPG.GetBalance(ctx, newWalletUUID)
 	assert.NoError(t, err)
 
-	assert.Equal(t, newWalletBalance, 1500.0)
+	assert.Equal(t, newWalletBalance, 1500)
 }
 
 func TestWithdraw(t *testing.T) {
 	newWalletUUID := uuid.New()
 
-	err := testPG.NewWallet(ctx, newWalletUUID, 1000.00)
+	err := testPG.NewWallet(ctx, newWalletUUID, 1000)
 	assert.NoError(t, err)
 
-	err = testPG.Withdraw(ctx, newWalletUUID, 500.00)
+	err = testPG.Withdraw(ctx, newWalletUUID, 500)
 	assert.NoError(t, err)
 
 	newWalletBalance, err := testPG.GetBalance(ctx, newWalletUUID)
 	assert.NoError(t, err)
 
-	assert.Equal(t, newWalletBalance, 500.0)
+	assert.Equal(t, newWalletBalance, 500)
 }
 
 func TestWithdrawError(t *testing.T) {
 	newWalletUUID := uuid.New()
 
-	err := testPG.NewWallet(ctx, newWalletUUID, 1000.00)
+	err := testPG.NewWallet(ctx, newWalletUUID, 1000)
 	assert.NoError(t, err)
 
-	err = testPG.Withdraw(ctx, newWalletUUID, 1500.00)
+	err = testPG.Withdraw(ctx, newWalletUUID, 1500)
 	assert.Error(t, err)
 
 	assert.True(t, errors.Is(err, custom_errors.ErrNotEnoughFunds))

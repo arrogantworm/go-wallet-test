@@ -41,7 +41,7 @@ func TestGetWallet(t *testing.T) {
 	})
 
 	t.Run("valid get", func(t *testing.T) {
-		walletBalance := 12.0
+		walletBalance := 1200
 
 		err := repo.NewWallet(ctx, walletID, walletBalance)
 		assert.NoError(t, err)
@@ -79,7 +79,7 @@ func TestDepositAndWithdraw(t *testing.T) {
 	router.Post("/api/v1/wallet", h.updateWalletBalance)
 
 	t.Run("valid deposit", func(t *testing.T) {
-		body := `{"walletId":"` + walletID.String() + `", "operationType": "deposit", "amount": 50}`
+		body := `{"walletId":"` + walletID.String() + `", "operationType": "deposit", "amount": "50.00"}`
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/wallet", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		rr := httptest.NewRecorder()
@@ -87,8 +87,17 @@ func TestDepositAndWithdraw(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rr.Code)
 	})
 
+	t.Run("negative withdraw", func(t *testing.T) {
+		body := `{"walletId":"` + walletID.String() + `", "operationType": "withdraw", "amount": "-30.00"}`
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/wallet", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+		router.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+	})
+
 	t.Run("valid withdraw", func(t *testing.T) {
-		body := `{"walletId":"` + walletID.String() + `", "operationType": "withdraw", "amount": 30}`
+		body := `{"walletId":"` + walletID.String() + `", "operationType": "withdraw", "amount": "30.00"}`
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/wallet", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		rr := httptest.NewRecorder()
@@ -97,7 +106,7 @@ func TestDepositAndWithdraw(t *testing.T) {
 	})
 
 	t.Run("withdraw with not enough funds", func(t *testing.T) {
-		body := `{"walletId":"` + walletID.String() + `", "operationType": "withdraw", "amount": 100000}`
+		body := `{"walletId":"` + walletID.String() + `", "operationType": "withdraw", "amount": "1000.00"}`
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/wallet", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		rr := httptest.NewRecorder()
@@ -106,7 +115,7 @@ func TestDepositAndWithdraw(t *testing.T) {
 	})
 
 	t.Run("invalid operation type", func(t *testing.T) {
-		body := `{"walletId":"` + walletID.String() + `", "operationType": "test", "amount": 10}`
+		body := `{"walletId":"` + walletID.String() + `", "operationType": "test", "amount": "10.00"}`
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/wallet", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		rr := httptest.NewRecorder()
@@ -115,7 +124,7 @@ func TestDepositAndWithdraw(t *testing.T) {
 	})
 
 	t.Run("invalid UUID", func(t *testing.T) {
-		body := `{"walletId":"test", "operationType": "deposit", "amount": 10}`
+		body := `{"walletId":"test", "operationType": "deposit", "amount": "10.00"}`
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/wallet", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		rr := httptest.NewRecorder()
@@ -125,7 +134,7 @@ func TestDepositAndWithdraw(t *testing.T) {
 
 	t.Run("create wallet on first deposit", func(t *testing.T) {
 		newWalletID := uuid.New()
-		body := `{"walletId":"` + newWalletID.String() + `", "operationType": "deposit", "amount": 25}`
+		body := `{"walletId":"` + newWalletID.String() + `", "operationType": "deposit", "amount": "25.00"}`
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/wallet", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		rr := httptest.NewRecorder()
@@ -134,7 +143,7 @@ func TestDepositAndWithdraw(t *testing.T) {
 
 		balance, err := repo.GetBalance(ctx, newWalletID)
 		assert.NoError(t, err)
-		assert.Equal(t, 25.0, balance)
+		assert.Equal(t, 25*100, balance)
 	})
 
 }
@@ -176,7 +185,7 @@ func TestConcurrentDeposits(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			defer func() { <-sem }()
-			body := fmt.Sprintf(`{"walletId":"%s", "operationType": "deposit", "amount": 1}`, walletID)
+			body := fmt.Sprintf(`{"walletId":"%s", "operationType": "deposit", "amount": "1.00"}`, walletID)
 			req, err := http.NewRequest(http.MethodPost, server.URL+"/api/v1/wallet", strings.NewReader(body))
 			if err != nil {
 				atomic.AddInt64(&failCount, 1)
@@ -206,7 +215,7 @@ func TestConcurrentDeposits(t *testing.T) {
 	// log.Println(finalBalance)
 	assert.NoError(t, err)
 
-	assert.Equal(t, float64(totalRequests), finalBalance)
+	assert.Equal(t, int(totalRequests)*100, finalBalance)
 	assert.Equal(t, int64(totalRequests), successCount)
 	assert.Equal(t, int64(0), failCount)
 }
