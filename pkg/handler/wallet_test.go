@@ -7,12 +7,12 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
-	"wallet-app/pkg/models"
 	"wallet-app/pkg/service"
 	"wallet-app/pkg/testutils"
 
@@ -56,11 +56,15 @@ func TestGetWallet(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, rr.Code)
 
-		var resp models.Wallet
+		var resp WalletResp
 		err = json.NewDecoder(rr.Body).Decode(&resp)
 		assert.NoError(t, err)
 
-		assert.Equal(t, walletBalance, resp.Balance)
+		balanceStr := resp.Balance
+		balanceStr = strings.Replace(balanceStr, ".", "", 1)
+		balance, _ := strconv.Atoi(balanceStr)
+
+		assert.Equal(t, walletBalance, balance)
 
 	})
 
@@ -85,6 +89,15 @@ func TestDepositAndWithdraw(t *testing.T) {
 		rr := httptest.NewRecorder()
 		router.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusOK, rr.Code)
+	})
+
+	t.Run("invalid deposit - wrong amount", func(t *testing.T) {
+		body := `{"walletId":"` + walletID.String() + `", "operationType": "deposit", "amount": "5000"}`
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/wallet", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+		router.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
 	})
 
 	t.Run("negative withdraw", func(t *testing.T) {

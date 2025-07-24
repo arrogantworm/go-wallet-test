@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 	custom_errors "wallet-app/pkg/errors"
-	"wallet-app/pkg/models"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -20,6 +19,11 @@ type (
 		WalletID  uuid.UUID `json:"walletId"`
 		Operation string    `json:"operationType"`
 		Amount    string    `json:"amount"`
+	}
+
+	WalletResp struct {
+		ID      uuid.UUID `json:"id"`
+		Balance string    `json:"balance"`
 	}
 )
 
@@ -42,7 +46,7 @@ func (h *Handler) getWalletInfo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	res := models.Wallet{
+	res := WalletResp{
 		ID:      walletID,
 		Balance: balance,
 	}
