@@ -41,7 +41,7 @@ func TestGetWallet(t *testing.T) {
 	})
 
 	t.Run("valid get", func(t *testing.T) {
-		walletBalance := 1200
+		walletBalance := 100
 
 		err := repo.NewWallet(ctx, walletID, walletBalance)
 		assert.NoError(t, err)

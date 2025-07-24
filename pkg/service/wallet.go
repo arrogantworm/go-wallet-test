@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"strconv"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -20,8 +20,9 @@ func (s *Service) GetBalance(ctx context.Context, walletID uuid.UUID) (string, e
 	if err != nil {
 		return "", err
 	}
-	balanceStr := strconv.Itoa(balance)
-	balanceStr = balanceStr[:len(balanceStr) -2] + "." + balanceStr[len(balanceStr) - 2:]
+
+	balanceStr := fmt.Sprintf("%03d", balance)
+	balanceStr = balanceStr[:len(balanceStr)-2] + "." + balanceStr[len(balanceStr)-2:]
 
 	return balanceStr, nil
 }
